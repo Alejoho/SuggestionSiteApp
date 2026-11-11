@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="SuggestionAppLibrary/SuggestionAppLibrary.csproj" Id="84b1f294-e895-4c0e-8ac1-9b64bc6d08db" />
+  <Project Path="SuggestionAppUI/SuggestionAppUI.csproj" Id="9cfdc287-7454-4c68-ab34-eb9ed53c3b28" />
+</Solution>
