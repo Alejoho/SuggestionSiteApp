@@ -1,10 +1,11 @@
 ﻿namespace SuggestionAppLibrary.Models;
 
+#nullable disable
 public class BasicUserModel
 {
    [BsonRepresentation(BsonType.ObjectId)]
-   public string Id { get; set; } = string.Empty;
-   public string DisplayName { get; set; } = string.Empty;
+   public string Id { get; set; }
+   public string DisplayName { get; set; }
 
    public BasicUserModel()
    {
