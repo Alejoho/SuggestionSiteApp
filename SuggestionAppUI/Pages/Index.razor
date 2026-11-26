@@ -1,8 +1,232 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 
-<PageTitle>Index</PageTitle>
+@inject IUserData UserData
+@inject ISuggestionData SuggestionData
+@inject ICategoryData CategoryData
+@inject IStatusData StatusData
+@inject NavigationManager NavigationManager
+@inject ProtectedSessionStorage SessionStorage
 
-<h1>Hello, world!</h1>
+<h1>Training Suggestions</h1>
 
-Welcome to your new app.
+<div>
+    <button>Suggest</button>
+</div>
 
+<div>
+    <div>@_suggestions?.Count Suggestions</div>
+    <div>
+        <button @onclick="() => ApplySortedFilter(true)">New</button>
+        <button @onclick="() => ApplySortedFilter(false)">Popular</button>
+    </div>
+    <div>
+        <input type="text" placeholder="Search"
+               aria-label="Search box"
+               @oninput="@((txt) => OnSearchInput((string)(txt.Value ?? "")))" />
+        @* which one of these two is better 'txt.Value?.ToString() ?? ""' or '(string)(txt.Value ?? "")' /> *@
+
+    </div>
+</div>
+
+<div>
+    <div>
+        @if (_suggestions is not null)
+        {
+            @*ItemsProvider="LoadMoreSuggestions"*@
+            <Virtualize Items="@_suggestions" Context="s" OverscanCount="10">
+                <hr />
+                <div>
+                    <div>
+                        <div>@GetUpvoteUpperText(s)</div>
+                        <span class="oi oi-caret-top"></span>
+                        <div>@GetUpvoteBottomText(s)</div>
+                    </div>
+                    <div>
+                        <div @onclick="() => OpenDetails(s.Id)">
+                            @s.Suggestion
+                        </div>
+                        <div @onclick="() => OpenDetails(s.Id)">
+                            @s.Category.CategoryName
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            @s.SuggestionStatus.StatusName
+                        </div>
+                    </div>
+                </div>
+            </Virtualize>
+        }
+    </div>
+    <div>
+        <hr />
+        <hr />
+        @if(_categories is not null)
+        {
+            <div>
+                <span>Category</span>
+                <div @onclick="()=>OnCategoryClick()">All</div>
+                @foreach(var c in _categories)
+                {
+                    <div @onclick="()=>OnCategoryClick(c.CategoryName)">@c.CategoryName</div>
+                }
+            </div>
+        }
+        <hr />
+        <hr />
+        @if(_statuses is not null)
+        {
+            <div>
+                <span>Status</span>
+                <div @onclick="()=>OnStatusClick()">All</div>
+                @foreach(var c in _statuses)
+                {
+                    <div @onclick="() => OnStatusClick(c.StatusName)">@c.StatusName</div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<CategoryModel>? _categories;
+    private List<StatusModel>? _statuses;
+    private List<SuggestionModel>? _suggestions;
+
+    private string _categoryFilter = "All";
+    private string _statusFilter = "All";
+    private string _searchText = "";
+    private bool _isSortedByNew = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await CategoryData.GetAllCategoriesAsync();
+        _statuses = await StatusData.GetAllStatusesAsync();
+        _suggestions = await SuggestionData.GetAllApprovedSuggestions();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadFilterState();
+            await FilterSuggestions();
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task FilterSuggestions()
+    {
+        IEnumerable<SuggestionModel>? filteredSugg = await SuggestionData.GetAllApprovedSuggestions();
+
+        if (_categoryFilter != "All")
+        {
+            filteredSugg = filteredSugg.Where(s => s.Category.CategoryName == _categoryFilter);
+        }
+
+        if (_statusFilter != "All")
+        {
+            filteredSugg = filteredSugg.Where(s => s.SuggestionStatus.StatusName == _statusFilter);
+        }
+
+        if (string.IsNullOrWhiteSpace(_searchText) == false)
+        {
+            filteredSugg = filteredSugg.Where(
+                s => s.Suggestion.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase)
+            );
+        }
+
+        if (_isSortedByNew)
+        {
+            filteredSugg = filteredSugg.OrderByDescending(s => s.DateCreated);
+        }
+        else
+        {
+            filteredSugg = filteredSugg.OrderByDescending(s => s.UserVotes.Count)
+                .ThenByDescending(s => s.DateCreated);
+        }
+
+        _suggestions = filteredSugg.ToList();
+
+        await SaveFilterState();
+    }
+
+    private async Task LoadFilterState()
+    {
+        var stringResult = await SessionStorage.GetAsync<string>(nameof(_categoryFilter));
+
+        if (stringResult.Success && string.IsNullOrWhiteSpace(stringResult.Value) == false)
+        {
+            _categoryFilter = stringResult.Value;
+        }
+
+        stringResult = await SessionStorage.GetAsync<string>(nameof(_statusFilter));
+
+        if (stringResult.Success && string.IsNullOrWhiteSpace(stringResult.Value) == false)
+        {
+            _statusFilter = stringResult.Value;
+        }
+
+        stringResult = await SessionStorage.GetAsync<string>(nameof(_searchText));
+        _searchText = stringResult.Value ?? "";
+
+
+        var boolResult = await SessionStorage.GetAsync<bool>(nameof(_isSortedByNew));
+        _isSortedByNew = boolResult.Success ? boolResult.Value : true;
+    }
+
+    private async Task SaveFilterState()
+    {
+        await SessionStorage.SetAsync(nameof(_categoryFilter), _categoryFilter);
+        await SessionStorage.SetAsync(nameof(_statusFilter), _statusFilter);
+        await SessionStorage.SetAsync(nameof(_searchText), _searchText);
+        await SessionStorage.SetAsync(nameof(_isSortedByNew), _isSortedByNew);
+    }
+
+    private async Task OnCategoryClick(string category = "All")
+    {
+        _categoryFilter = category;
+        await FilterSuggestions();
+    }
+
+    private async Task OnStatusClick(string status = "All")
+    {
+        _statusFilter = status;
+        await FilterSuggestions();
+    }
+
+    private async Task OnSearchInput(string search)
+    {
+        _searchText = search;
+        await FilterSuggestions();
+    }
+
+    private async Task ApplySortedFilter(bool isNew)
+    {
+        _isSortedByNew = isNew;
+        await FilterSuggestions();
+    }
+
+    private string GetUpvoteUpperText(SuggestionModel suggestion)
+        => suggestion.UserVotes.Count > 0 ?
+            suggestion.UserVotes.Count.ToString("00") :
+            "Click To";
+
+
+    private string GetUpvoteBottomText(SuggestionModel suggestion)
+        => suggestion.UserVotes.Count > 1 ?
+            "Upvotes" :
+            "Upvote";
+
+
+    private void OpenDetails(string suggestionId)
+        => NavigationManager.NavigateTo($"/Details/{suggestionId}");
+
+    private async ValueTask<ItemsProviderResult<SuggestionModel>> LoadMoreSuggestions(ItemsProviderRequest request)
+    {
+        // TODO: Maybe implement this method
+        throw new NotImplementedException();
+    }
+}

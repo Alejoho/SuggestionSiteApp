@@ -7,6 +7,7 @@
 .vs/
 .vscode/
 ._*
+*.env
 
 # User-specific files
 *.rsuser
