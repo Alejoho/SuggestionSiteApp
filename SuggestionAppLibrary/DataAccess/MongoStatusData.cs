@@ -31,5 +31,9 @@ public class MongoStatusData : IStatusData
    }
 
    public Task CreateStatus(StatusModel status)
-      => _statusCollection.InsertOneAsync(status);
+   {
+      // Statuses won't change very often, so it's fine to have this order.
+      _cache.Remove(CacheName);
+      return _statusCollection.InsertOneAsync(status);
+   }
 }

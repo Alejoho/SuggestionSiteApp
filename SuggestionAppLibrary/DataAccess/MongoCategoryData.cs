@@ -32,5 +32,9 @@ public class MongoCategoryData : ICategoryData
    }
 
    public Task CreateCategory(CategoryModel category)
-      => _categoryCollection.InsertOneAsync(category);
+   {
+      // Categories won't change very often, so it's fine to have this order.
+      _cache.Remove(CacheName);
+      return _categoryCollection.InsertOneAsync(category);
+   }
 }
