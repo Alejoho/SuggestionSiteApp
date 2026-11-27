@@ -1,0 +1,28 @@
+name: CI - SuggestionApp
+
+on:
+  pull_request:
+    branches: main
+
+jobs:
+  dotnet-build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Configure .NET SDK (LTS 6.0)
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build Project
+        run: dotnet build --no-restore -c Release 
+
+      - name: Run Unit Tests
+        run: dotnet test --no-build -c Release --verbosity normal
