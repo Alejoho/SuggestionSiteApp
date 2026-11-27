@@ -224,7 +224,7 @@
     private void OpenDetails(string suggestionId)
         => NavigationManager.NavigateTo($"/Details/{suggestionId}");
 
-    private async ValueTask<ItemsProviderResult<SuggestionModel>> LoadMoreSuggestions(ItemsProviderRequest request)
+    private ValueTask<ItemsProviderResult<SuggestionModel>> LoadMoreSuggestions(ItemsProviderRequest request)
     {
         // TODO: Maybe implement this method
         throw new NotImplementedException();
