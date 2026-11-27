@@ -31,7 +31,11 @@
 
 <div>
     <div>
-        @if (_suggestions is not null)
+        @if (_suggestions is null)
+        {
+            <p>Loading...</p>
+        }
+        else
         {
             @*ItemsProvider="LoadMoreSuggestions"*@
             <Virtualize Items="@_suggestions" Context="s" OverscanCount="10">
@@ -62,25 +66,25 @@
     <div>
         <hr />
         <hr />
-        @if(_categories is not null)
+        @if (_categories is not null)
         {
             <div>
                 <span>Category</span>
-                <div @onclick="()=>OnCategoryClick()">All</div>
-                @foreach(var c in _categories)
+                <div @onclick="() => OnCategoryClick()">All</div>
+                @foreach (var c in _categories)
                 {
-                    <div @onclick="()=>OnCategoryClick(c.CategoryName)">@c.CategoryName</div>
+                    <div @onclick="() => OnCategoryClick(c.CategoryName)">@c.CategoryName</div>
                 }
             </div>
         }
         <hr />
         <hr />
-        @if(_statuses is not null)
+        @if (_statuses is not null)
         {
             <div>
                 <span>Status</span>
-                <div @onclick="()=>OnStatusClick()">All</div>
-                @foreach(var c in _statuses)
+                <div @onclick="() => OnStatusClick()">All</div>
+                @foreach (var c in _statuses)
                 {
                     <div @onclick="() => OnStatusClick(c.StatusName)">@c.StatusName</div>
                 }
