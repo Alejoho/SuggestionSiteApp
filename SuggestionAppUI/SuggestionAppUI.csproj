@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>3e70501f-06bb-430e-8ce0-69ea31066285</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Web" Version="1.21.1" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="1.21.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.24.2-preview.1" />
   </ItemGroup>
 
 </Project>
